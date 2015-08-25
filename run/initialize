@@ -21,7 +21,7 @@ chef_client_key_path="`pwd`/.chef/${chef_client_name}.pem"
 
 
 #________________________________________
-# Begin application execution
+# Execute the application
 #
 
 # Create directories
