@@ -1,1 +1,2 @@
-.chef
+.chef/*.pem
+.chef/knife.rb

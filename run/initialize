@@ -4,7 +4,7 @@
 #
 
 #________________________________________
-#
+# Global variables
 #
 
 #
@@ -12,18 +12,19 @@
 chef_client_name='default'
 chef_server_host='localhost'
 chef_server_port=8889
+knife_config_path="`pwd`/.chef/knife.rb"
 
 #
 
 chef_client_key_path="`pwd`/.chef/${chef_client_name}.pem"
 
 #________________________________________
-#
+# Main
 #
 
 # Generate a knife configuration file
 
-cat > .chef <<EOF
+cat > $knife_config_path <<EOF
 #
 chef_base_dir    = Dir.getwd
 client_name      = '$chef_client_name'
