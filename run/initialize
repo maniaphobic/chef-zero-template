@@ -71,10 +71,10 @@ echo "Generated ${key_length}-bit private key"
 
 mkdir -p $chef_content_dir
 rsync \
-    --archive \
-    --backup \
-    --suffix .old \
-    . $chef_content_dir
+  --archive \
+  --backup \
+  --suffix .old \
+  . $chef_content_dir
 echo "Installed content to '$chef_content_dir'"
 
 # Remove the working directory
