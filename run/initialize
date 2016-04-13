@@ -9,48 +9,76 @@
 
 #
 
-chef_client_name='default'
+chef_client_name=${CHEF_CLIENT_NAME:-'default'}
+chef_config_path='./.chef'
+chef_content_dir=${CHEF_CONTENT_DIR:-"`pwd`/chef"}
 chef_server_host='localhost'
-chef_server_port=8889
-knife_config_path="`pwd`/.chef/knife.rb"
-replace_knife_config='false'
+chef_server_port=${CHEF_SERVER_PORT:-8889}
+key_length=2048
 
 #
 
-chef_client_key_path="`pwd`/.chef/${chef_client_name}.pem"
-
+client_key_path="${chef_config_path}/${chef_client_name}.pem"
+knife_config_path="$chef_config_path/knife.rb"
 
 #________________________________________
 # Execute the application
 #
 
+# Create and change to a temporary working directory
+
+wd=`mktemp -d /tmp/chef,XXXXXXX` ; cd $wd
+echo "Staging content in working directory '$wd'"
+
 # Create directories
 
-for dir in .chef cookbooks data_bags environments nodes roles; do
-  mkdir -p $dir
-done
+mkdir -p \
+  $chef_config_path \
+  cookbooks \
+  data_bags \
+  environments \
+  nodes \
+  roles \
+  ;
 
 # Generate a knife configuration file
 
-test "$replace_knife_config" != "false" && cat > $knife_config_path <<EOF
+cat > $knife_config_path <<EOF
 #
-chef_base_dir    = Dir.getwd
-client_name      = '$chef_client_name'
+Ohai::Config[:disabled_plugins] = [:Passwd]
+chef_content_dir                = Dir.getwd
+client_name                     = '$chef_client_name'
 #
-chef_config_dir  = "#{chef_base_dir}/.chef"
+chef_config_dir                 = "#{chef_content_dir}/.chef"
 #
 cache_path       "#{chef_config_dir}/cache"
 chef_server_url  'http://${chef_server_host}:${chef_server_port}'
 client_key       "#{chef_config_dir}/#{client_name}.pem"
-cookbook_path    "#{chef_base_dir}/cookbooks"
+cookbook_path    "#{chef_content_dir}/cookbooks"
 node_name        client_name
 ssl_verify_mode  :verify_none
 #
 EOF
+echo "Generated knife configuration file"
 
-# Generate the client's private key
+# Generate the client's private key file
 
-openssl genrsa 2048 > $chef_client_key_path
-chmod 600 $chef_client_key_path
+openssl genrsa -out $client_key_path $key_length
+chmod og-rwx $client_key_path
+echo "Generated ${key_length}-bit private key"
+
+# Install the files
+
+mkdir -p $chef_content_dir
+rsync \
+    --archive \
+    --backup \
+    --suffix .old \
+    . $chef_content_dir
+echo "Installed content to '$chef_content_dir'"
+
+# Remove the working directory
+
+cd $chef_content_dir ; rm -fr $wd
 
 #
